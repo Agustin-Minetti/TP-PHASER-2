@@ -1,14 +1,14 @@
-export default class Game extends Phaser.Scene {
+export default class Level2 extends Phaser.Scene {
   constructor() {
-    super("game");
+    super("level2");
   }
 
-  init() {
-    this.pociones = 0;
+  init(data) {
+    this.pociones = data.pociones || 0; // recibe puntaje del nivel anterior
   }
 
   preload() {
-    this.load.tilemapTiledJSON("mapa", "public/assets/mapa1.json");
+    this.load.tilemapTiledJSON("mapa2", "public/assets/mapa2.json");
     this.load.image("atlas", "public/assets/ATLASPHASER2.png");
     this.load.spritesheet("sprites", "public/assets/ATLASPHASER2.png", {
       frameWidth: 32,
@@ -17,38 +17,31 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
-    // ── MAPA ──────────────────────────────────────────────
-    const map     = this.make.tilemap({ key: "mapa" });
+    const map     = this.make.tilemap({ key: "mapa2" });
     const tileset = map.addTilesetImage("ATLAS", "atlas");
 
-    map.createLayer("piso",    tileset, 0, 0);
+    map.createLayer("piso", tileset, 0, 0);
     const paredesCapa  = map.createLayer("paredes", tileset, 0, 0);
     const objetosLayer = map.getObjectLayer("objetos");
 
-    // ── COLISIONES DE PAREDES ─────────────────────────────
     paredesCapa.setCollision([2]);
-    
-    // ── JUGADOR ───────────────────────────────────────────
+
     const spawn = map.findObject("objetos", (o) => o.name === "spawn");
     this.jugador = this.physics.add.sprite(spawn.x, spawn.y, "sprites", 16)
       .setDisplaySize(32, 32)
       .setCollideWorldBounds(true);
     this.jugador.body.allowGravity = false;
 
-    // ── COLISIÓN JUGADOR ↔ PAREDES ────────────────────────
     this.physics.add.collider(this.jugador, paredesCapa);
 
-    // ── TECLADO ───────────────────────────────────────────
     this.cursores = this.input.keyboard.createCursorKeys();
 
-    // ── ZONA DE FIN ───────────────────────────────────────
     const fin = map.findObject("objetos", (o) => o.name === "fin");
     this.zonFin = this.add.zone(fin.x, fin.y, 32, 32);
     this.physics.world.enable(this.zonFin);
     this.zonFin.body.allowGravity = false;
     this.zonFin.body.immovable    = true;
 
-    // ── POCIONES ──────────────────────────────────────────
     this.grupoPociones = this.physics.add.staticGroup();
     objetosLayer.objects.forEach((obj) => {
       if (obj.name === "pocion" && obj.ellipse) {
@@ -59,7 +52,6 @@ export default class Game extends Phaser.Scene {
       }
     });
 
-    // ── OVERLAPS ──────────────────────────────────────────
     this.physics.add.overlap(
       this.jugador, this.grupoPociones,
       this.recolectarPocion, null, this
@@ -69,26 +61,21 @@ export default class Game extends Phaser.Scene {
       this.llegarAlFin, null, this
     );
 
-    // ── UI ────────────────────────────────────────────────
     this.textoUI = this.add
       .text(16, 16, this.getTexto(), { fontSize: "20px", fill: "#ffffff" })
       .setScrollFactor(0);
 
-    // ── CÁMARA ────────────────────────────────────────────
     this.cameras.main
       .setBounds(0, 0, map.widthInPixels, map.heightInPixels)
       .startFollow(this.jugador);
 
-    // ── SIN GRAVEDAD (top-down) ───────────────────────────
     this.physics.world.gravity.y = 0;
   }
 
   update() {
     this.jugador.setVelocity(0);
-
     if (this.cursores.left.isDown)       this.jugador.setVelocityX(-160);
     else if (this.cursores.right.isDown) this.jugador.setVelocityX(160);
-
     if (this.cursores.up.isDown)         this.jugador.setVelocityY(-160);
     else if (this.cursores.down.isDown)  this.jugador.setVelocityY(160);
   }
@@ -101,13 +88,13 @@ export default class Game extends Phaser.Scene {
 
   llegarAlFin() {
     if (this.pociones >= 5) {
-      this.scene.start("level2", { pociones: this.pociones });
+      this.scene.start("level3", { pociones: this.pociones });
     } else {
       console.log(`Te faltan ${5 - this.pociones} pociones`);
     }
   }
-  
+
   getTexto() {
-    return `Pociones: ${this.pociones}/5`;
+    return `Pociones: ${this.pociones}`;
   }
 }
