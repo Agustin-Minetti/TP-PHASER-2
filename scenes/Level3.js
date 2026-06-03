@@ -29,12 +29,46 @@ export default class Level3 extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
     const spawn = map.findObject("objetos", (o) => o.name === "spawn");
-    this.jugador = this.physics.add.sprite(spawn.x, spawn.y, "sprites", 16)
+    this.jugador = this.physics.add.sprite(spawn.x, spawn.y, "sprites", 40)
       .setDisplaySize(32, 32)
       .setCollideWorldBounds(true);
     this.jugador.body.allowGravity = false;
+    this.jugador.body.setSize(20, 20);
+    this.jugador.body.setOffset(6, 6);
 
     this.physics.add.collider(this.jugador, paredesCapa);
+
+    // Animaciones del gato
+    this.anims.create({
+      key: "caminar-abajo",
+      frames: this.anims.generateFrameNumbers("sprites", { start: 8, end: 11 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: "caminar-arriba",
+      frames: this.anims.generateFrameNumbers("sprites", { start: 16, end: 19 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: "caminar-derecha",
+      frames: this.anims.generateFrameNumbers("sprites", { start: 24, end: 27 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: "caminar-izquierda",
+      frames: this.anims.generateFrameNumbers("sprites", { start: 32, end: 35 }),
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: "idle",
+      frames: this.anims.generateFrameNumbers("sprites", { start: 40, end: 43 }),
+      frameRate: 4,
+      repeat: -1
+    });
 
     this.cursores = this.input.keyboard.createCursorKeys();
 
@@ -76,10 +110,22 @@ export default class Level3 extends Phaser.Scene {
 
   update() {
     this.jugador.setVelocity(0);
-    if (this.cursores.left.isDown)       this.jugador.setVelocityX(-160);
-    else if (this.cursores.right.isDown) this.jugador.setVelocityX(160);
-    if (this.cursores.up.isDown)         this.jugador.setVelocityY(-160);
-    else if (this.cursores.down.isDown)  this.jugador.setVelocityY(160);
+
+    if (this.cursores.left.isDown) {
+      this.jugador.setVelocityX(-160);
+      this.jugador.anims.play("caminar-izquierda", true);
+    } else if (this.cursores.right.isDown) {
+      this.jugador.setVelocityX(160);
+      this.jugador.anims.play("caminar-derecha", true);
+    } else if (this.cursores.up.isDown) {
+      this.jugador.setVelocityY(-160);
+      this.jugador.anims.play("caminar-arriba", true);
+    } else if (this.cursores.down.isDown) {
+      this.jugador.setVelocityY(160);
+      this.jugador.anims.play("caminar-abajo", true);
+    } else {
+      this.jugador.anims.play("idle", true); 
+    }
   }
 
   recolectarPocion(jugador, pocion) {
